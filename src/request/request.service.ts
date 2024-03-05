@@ -79,9 +79,6 @@ export class RequestService {
         weatherResponse.data,
       );
     }
-    return {
-      trafficData: trafficResponse.data,
-      weatherData: weatherResponse.data,
-    };
+    return trafficResponse.data.items[0].cameras;
   }
 }
