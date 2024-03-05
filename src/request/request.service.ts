@@ -4,6 +4,7 @@ import { HttpService } from '@nestjs/axios';
 import { catchError, firstValueFrom } from 'rxjs';
 import { AxiosError } from 'axios';
 import parseGeoCodeLocation from './lib/parseGeocodeInfo';
+import mapWeather from './lib/mapWeather';
 
 @Injectable()
 export class RequestService {
@@ -67,12 +68,16 @@ export class RequestService {
     );
     //tag all camera names to their corresponding camera
     for (var i = 0; i < cameraResponses.length; i++) {
-      //parse the first geocode location available from Openmap API
+      //parse the first geocode location available from Openmap API as the name - Format: camera_id - name
       trafficResponse.data.items[0].cameras[i].name =
         `${trafficResponse.data.items[0].cameras[i].camera_id} - ${parseGeoCodeLocation(
           cameraResponses[i].data.GeocodeInfo[0],
         )}`;
-      //TODO: Tag weather data to all cameras
+      //map weather to camera
+      trafficResponse.data.items[0].cameras[i].weather = mapWeather(
+        trafficResponse.data.items[0].cameras[i].location,
+        weatherResponse.data,
+      );
     }
     return {
       trafficData: trafficResponse.data,

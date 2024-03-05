@@ -1,3 +1,4 @@
+//Geocode DTO from Open Map API
 export class GeocodeDto {
   BUILDINGNAME: string;
   BLOCK: string;
