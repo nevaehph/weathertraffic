@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { RequestModule } from './request/request.module';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { RequestModule } from './request/request.module';
     }),
     ConfigModule.forRoot(),
     RequestModule,
+    CacheModule.register(),
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -16,7 +16,7 @@ function calculateDistance(
   },
 ): number {
   var R = 6371; // Radius of the earth in km
-  var dLat = deg2rad(location2.latitude - location1.longitude); // deg2rad below
+  var dLat = deg2rad(location2.latitude - location1.longitude);
   var dLon = deg2rad(location2.longitude - location1.longitude);
   var a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +

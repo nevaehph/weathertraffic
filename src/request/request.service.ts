@@ -11,6 +11,8 @@ export class RequestService {
   constructor(private readonly httpService: HttpService) {}
 
   async requestTrafficWeather(request: RequestTrafficWeatherDto) {
+    //remove milliseconds from date_time if applicable
+    request.datetime = request.datetime.split('.')[0];
     //request Traffic Data
     let trafficRequest = firstValueFrom(
       this.httpService
@@ -79,6 +81,9 @@ export class RequestService {
         weatherResponse.data,
       );
     }
+
+    //cache data to redis
+
     return trafficResponse.data.items[0].cameras;
   }
 }
