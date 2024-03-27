@@ -1,4 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
+import { Injectable, Inject } from '@nestjs/common';
 import { RequestTrafficWeatherDto } from './dto/request-trafficweather.dto';
 import { HttpService } from '@nestjs/axios';
 import { catchError, firstValueFrom } from 'rxjs';
@@ -8,7 +10,10 @@ import mapWeather from './lib/mapWeather';
 
 @Injectable()
 export class RequestService {
-  constructor(private readonly httpService: HttpService) {}
+  constructor(
+    private readonly httpService: HttpService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {}
 
   async requestTrafficWeather(request: RequestTrafficWeatherDto) {
     //remove milliseconds from date_time if applicable
@@ -35,6 +40,7 @@ export class RequestService {
           }),
         ),
     );
+
     let [trafficResponse, weatherResponse] = await Promise.all([
       trafficRequest,
       weatherRequest,
@@ -83,6 +89,9 @@ export class RequestService {
     }
 
     //cache data to redis
+    let cacheKey = request.datetime;
+    let cacheValue = JSON.stringify(trafficResponse.data.items[0].cameras);
+    await this.cacheManager.set(cacheKey, cacheValue);
 
     return trafficResponse.data.items[0].cameras;
   }
