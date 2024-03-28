@@ -1,5 +1,3 @@
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
 import { Injectable, Inject } from '@nestjs/common';
 import { RequestTrafficWeatherDto } from './dto/request-trafficweather.dto';
 import { HttpService } from '@nestjs/axios';
@@ -7,12 +5,14 @@ import { catchError, firstValueFrom } from 'rxjs';
 import { AxiosError } from 'axios';
 import parseGeoCodeLocation from './lib/parseGeocodeInfo';
 import mapWeather from './lib/mapWeather';
+import Redis from 'ioredis';
+import { InjectRedis } from '@nestjs-modules/ioredis';
 
 @Injectable()
 export class RequestService {
   constructor(
     private readonly httpService: HttpService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    @InjectRedis() private readonly redis: Redis,
   ) {}
 
   async requestTrafficWeather(request: RequestTrafficWeatherDto) {
@@ -41,58 +41,82 @@ export class RequestService {
         ),
     );
 
-    let [trafficResponse, weatherResponse] = await Promise.all([
-      trafficRequest,
-      weatherRequest,
-    ]).catch((error: AxiosError) => {
-      throw error;
-    });
+    let responseData;
 
-    //TODO: Catch and handle empty values gracefully
-
-    //reverse geolocate all available cameras using Openmap API
-    let cameraLocations = trafficResponse.data.items[0].cameras.map((item) => {
-      return firstValueFrom(
-        this.httpService
-          .get(
-            `${process.env.REVERSE_GEO_API}?location=${item.location.latitude},${item.location.longitude}&buffer=10&addressType=All&otherFeatures=N`,
-            {
-              headers: {
-                Authorization: process.env.OPENMAP_KEY,
-              },
-            },
-          )
-          .pipe(
-            catchError((error: AxiosError) => {
-              throw error;
-            }),
-          ),
-      );
-    });
-    let cameraResponses = await Promise.all(cameraLocations).catch(
-      (error: AxiosError) => {
-        throw error;
-      },
-    );
-    //tag all camera names to their corresponding camera
-    for (var i = 0; i < cameraResponses.length; i++) {
-      //parse the first geocode location available from Openmap API as the name - Format: camera_id - name
-      trafficResponse.data.items[0].cameras[i].name =
-        `${trafficResponse.data.items[0].cameras[i].camera_id} - ${parseGeoCodeLocation(
-          cameraResponses[i].data.GeocodeInfo[0],
-        )}`;
-      //map weather to camera
-      trafficResponse.data.items[0].cameras[i].weather = mapWeather(
-        trafficResponse.data.items[0].cameras[i].location,
-        weatherResponse.data,
-      );
+    //general function used to fallback if an API request fails
+    async function loadBackup(that) {
+      //check if data is available in cache
+      let value = await that.redis.get(request.datetime);
+      if (value) {
+        //if cache value is available, set responseData as cache value
+        return JSON.parse(value);
+      } else {
+        return null;
+      }
     }
 
-    //cache data to redis
-    let cacheKey = request.datetime;
-    let cacheValue = JSON.stringify(trafficResponse.data.items[0].cameras);
-    await this.cacheManager.set(cacheKey, cacheValue);
+    let promiseResponse = await Promise.all([
+      trafficRequest,
+      weatherRequest,
+    ]).catch(async (error: AxiosError) => {
+      //if error is caught, attempt to fallback to cache
+      responseData = await loadBackup(this);
+      if (!responseData) {
+        throw error;
+      }
+    });
 
-    return trafficResponse.data.items[0].cameras;
+    if (!responseData) {
+      //reverse geolocate all available cameras using Openmap API
+      let trafficResponse = promiseResponse[0];
+      let weatherResponse = promiseResponse[1];
+      let cameraLocations = trafficResponse.data.items[0].cameras.map(
+        (item) => {
+          return firstValueFrom(
+            this.httpService
+              .get(
+                `${process.env.REVERSE_GEO_API}?location=${item.location.latitude},${item.location.longitude}&buffer=10&addressType=All&otherFeatures=N`,
+                {
+                  headers: {
+                    Authorization: process.env.OPENMAP_KEY,
+                  },
+                },
+              )
+              .pipe(
+                catchError((error: AxiosError) => {
+                  throw error;
+                }),
+              ),
+          );
+        },
+      );
+      let cameraResponses = await Promise.all(cameraLocations).catch(
+        (error: AxiosError) => {
+          throw error;
+        },
+      );
+      //tag all camera names to their corresponding camera
+      for (var i = 0; i < cameraResponses.length; i++) {
+        //parse the first geocode location available from Openmap API as the name - Format: camera_id - name
+        trafficResponse.data.items[0].cameras[i].name =
+          `${trafficResponse.data.items[0].cameras[i].camera_id} - ${parseGeoCodeLocation(
+            cameraResponses[i].data.GeocodeInfo[0],
+          )}`;
+        //map weather to camera
+        trafficResponse.data.items[0].cameras[i].weather = mapWeather(
+          trafficResponse.data.items[0].cameras[i].location,
+          weatherResponse.data,
+        );
+      }
+
+      //cache data to redis
+      let cacheKey = request.datetime.toString();
+      let cacheValue = JSON.stringify(trafficResponse.data.items[0].cameras);
+      await this.redis.set(cacheKey, cacheValue);
+
+      responseData = trafficResponse.data.items[0].cameras;
+    }
+
+    return responseData;
   }
 }
