@@ -6,7 +6,12 @@ import { RequestTrafficWeatherDto } from './dto/request-trafficweather.dto';
 export class RequestController {
   constructor(private readonly requestService: RequestService) {}
 
-  @Post() // For Users to request Traffic and Weather Information
+  /*
+    For Users to request Traffic and Weather Information
+    Body JSON Content
+      - datetime: Date & Time to query Traffic and Weather Information
+  */
+  @Post()
   requestTrafficWeather(
     @Body(ValidationPipe) request: RequestTrafficWeatherDto,
   ) {

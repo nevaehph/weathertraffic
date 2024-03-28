@@ -4,18 +4,14 @@ import ParsedRecord from '../dto/parsed-records.dto';
 /*
     Function to parse Record Data to be presented for Reports
 */
-export default function parseRecordData(records: Record[]): ParsedRecord[] {
-  let returnRecords = [];
-  for (var i = 0; i < records.length; i++) {
-    let locations = [];
-    for (var a = 0; a < records[i].data.length; a++) {
-      locations.push(records[i].data[a].name);
-    }
-
-    returnRecords.push({
-      datetime: records[i].datetime,
-      locations: locations,
-    });
+export default function parseRecordData(record: Record): ParsedRecord {
+  let locations = [];
+  for (var a = 0; a < record.data.length; a++) {
+    locations.push(record.data[a].name);
   }
-  return returnRecords;
+  return {
+    datetime: record.datetime,
+    locations: locations,
+    createdAt: record.createdAt,
+  };
 }
