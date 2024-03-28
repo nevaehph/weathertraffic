@@ -12,6 +12,5 @@ export default function parseRecordData(record: Record): ParsedRecord {
   return {
     datetime: record.datetime,
     locations: locations,
-    createdAt: record.createdAt,
   };
 }

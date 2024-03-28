@@ -2,7 +2,6 @@
 class ParsedRecord {
   datetime: Date;
   locations: string[];
-  createdAt: Date;
 }
 
 export default ParsedRecord;
