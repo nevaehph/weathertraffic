@@ -1,4 +1,4 @@
-import { Body, Controller, Post, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Post, ValidationPipe } from '@nestjs/common';
 import { RequestService } from './request.service';
 import { RequestTrafficWeatherDto } from './dto/request-trafficweather.dto';
 
@@ -16,5 +16,13 @@ export class RequestController {
     @Body(ValidationPipe) request: RequestTrafficWeatherDto,
   ) {
     return this.requestService.requestTrafficWeather(request);
+  }
+
+  /*
+    Request for webpage to get recommended date times (Gets 3 latest Date Times requested overall)
+  */
+  @Get('recommendations')
+  requestRecommendations() {
+    return this.requestService.requestRecommendations();
   }
 }

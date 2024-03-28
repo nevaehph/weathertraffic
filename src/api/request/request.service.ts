@@ -20,6 +20,7 @@ export class RequestService {
     private readonly recordRepository: Repository<Record>,
   ) {}
 
+  //Request for Users to request Traffic and Weather Information
   async requestTrafficWeather(request: RequestTrafficWeatherDto) {
     //remove milliseconds from date_time if applicable
     request.datetime = request.datetime.split('.')[0];
@@ -140,5 +141,21 @@ export class RequestService {
     this.recordRepository.save(record);
 
     return responseData;
+  }
+
+  //Request for webpage to get recommended date times (Gets 3 latest Date Times requested overall)
+  async requestRecommendations() {
+    let records = await this.recordRepository.find({
+      order: {
+        createdAt: 'DESC',
+      },
+      take: 3,
+    });
+    let returnArray = [];
+    for (var i = 0; i < records.length; i++) {
+      returnArray.push(records[i].datetime);
+    }
+
+    return returnArray;
   }
 }
