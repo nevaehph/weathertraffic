@@ -1,6 +1,6 @@
 import { IsDate, IsNotEmpty } from 'class-validator';
 
-import DataType from '../lib/DataType';
+import DataType from './data-type.dto';
 
 export class CreateRecordDto {
   //JSON Data of request

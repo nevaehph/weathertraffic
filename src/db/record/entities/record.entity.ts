@@ -6,16 +6,16 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-import DataType from '../lib/DataType';
+import DataType from '../dto/data-type.dto';
 
 @Entity()
 export class Record {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   //JSON Data of request
-  @Column({ type: 'json' })
-  data: DataType;
+  @Column({ type: 'jsonb' })
+  data: DataType[];
 
   //Date Time Parameter of request
   @Column({ type: 'timestamp without time zone' })

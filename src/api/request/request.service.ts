@@ -124,7 +124,7 @@ export class RequestService {
 
     //store record as data
     const record: Record = new Record();
-    record.data = { ...responseData };
+    record.data = [...responseData];
     //set datetime to not include timezone
     let datetime = new Date(request.datetime);
     let offset = datetime.getTimezoneOffset() * 60000;

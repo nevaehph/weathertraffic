@@ -1,4 +1,5 @@
-type DataType = {
+//DTO for data value stored in database
+class DataType {
   camera_id: string;
   image: string;
   image_metadata: {
@@ -13,6 +14,6 @@ type DataType = {
   name: string;
   timestamp: string;
   weather: string;
-}[];
+}
 
 export default DataType;
