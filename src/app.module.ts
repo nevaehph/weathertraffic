@@ -3,7 +3,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
-import { RequestModule } from './request/request.module';
+// API Modules
+import { RequestModule } from './api/request/request.module';
+import { ReportModule } from './api/report/report.module';
+//DB Entity Modules
+import { RecordModule } from './db/record/record.module';
 
 @Module({
   imports: [
@@ -19,6 +23,8 @@ import { RequestModule } from './request/request.module';
     }),
     ConfigModule.forRoot(),
     RequestModule,
+    ReportModule,
+    RecordModule,
   ],
   controllers: [AppController],
   providers: [AppService],
