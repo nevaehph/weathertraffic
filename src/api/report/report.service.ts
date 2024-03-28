@@ -4,6 +4,8 @@ import { Record } from '../../db/record/entities/record.entity';
 import { Between, Repository } from 'typeorm';
 import parseRecordData from './lib/parseRecordData';
 import { ReportTopDto } from './dto/report-top.dto';
+import { ReportMostSearchesDto } from './dto/report-most-searches.dto';
+import ParsedRecord from './dto/parsed-records.dto';
 
 @Injectable()
 export class ReportService {
@@ -84,10 +86,74 @@ export class ReportService {
     let topArray = array.slice(0, 10);
     let returnArray = [];
 
+    //parse each record data to be sent as response
     for (var i = 0; i < topArray.length; i++) {
       returnArray.push(parseRecordData(topArray[i][1].record));
     }
 
     return returnArray;
+  }
+
+  /*
+    Report 5c - retrieve the period of which there are most searches performed.
+  */
+  async mostSearchesReport(query: ReportMostSearchesDto) {
+    let startDate = new Date(parseInt(query.startTime));
+    //add period time to endDate as there might be searches beyond the period that counts towards a particular time
+    let periodTime = parseInt(query.period);
+    let endDate = new Date(parseInt(query.endTime) + periodTime);
+    let records = await this.recordRepository.find({
+      order: {
+        createdAt: 'ASC',
+      },
+      where: {
+        createdAt: Between(startDate, endDate),
+      },
+    });
+
+    //determine potential targets by trimming off dates that are beyond the period (between start time and end time)
+    let targets = [...records];
+    while (
+      targets[targets.length - 1].createdAt.getTime() >
+      new Date(parseInt(query.endTime)).getTime()
+    ) {
+      targets.pop();
+    }
+
+    console.log({ targets });
+    console.log({ records });
+
+    //if there are no potential targets, return a response to the client
+    if (targets.length < 1) {
+      return 'There are no records found within the period specified.';
+    }
+
+    //utilize sliding window to determine which target is the best (which has the most searches)
+    //setup initial values
+    let mostCount = 1;
+    let bestTarget = targets[0];
+    for (var i = 0; i < targets.length; i++) {
+      //each target will check the elements after it to see if their createdAt date is within the time of (createdAt + period), for each element that falls within the time, count + 1
+      let count = 1;
+      let slidingIndex = i + 1;
+
+      while (
+        slidingIndex < records.length &&
+        targets[i].createdAt.getTime() + periodTime >=
+          records[slidingIndex].createdAt.getTime()
+      ) {
+        count++;
+        slidingIndex++;
+      }
+
+      //if final count is higher than the current best target, set current target to be the best target
+      if (count > mostCount) {
+        mostCount = count;
+        bestTarget = targets[i];
+      }
+    }
+
+    //if counts are similar, it will be defaulted to the earliest best target.
+    return bestTarget.createdAt;
   }
 }
