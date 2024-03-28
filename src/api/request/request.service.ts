@@ -95,31 +95,38 @@ export class RequestService {
           );
         },
       );
-      let cameraResponses = await Promise.all(cameraLocations).catch(
-        (error: AxiosError) => {
-          throw error;
-        },
-      );
-      //tag all camera names to their corresponding camera
-      for (var i = 0; i < cameraResponses.length; i++) {
-        //parse the first geocode location available from Openmap API as the name - Format: camera_id - name
-        trafficResponse.data.items[0].cameras[i].name =
-          `${trafficResponse.data.items[0].cameras[i].camera_id} - ${parseGeoCodeLocation(
-            cameraResponses[i].data.GeocodeInfo[0],
-          )}`;
-        //map weather to camera
-        trafficResponse.data.items[0].cameras[i].weather = mapWeather(
-          trafficResponse.data.items[0].cameras[i].location,
-          weatherResponse.data,
+
+      if (!responseData) {
+        let cameraResponses = await Promise.all(cameraLocations).catch(
+          async (error: AxiosError) => {
+            //if error is caught, attempt to fallback to cache
+            responseData = await loadBackup(this);
+            if (!responseData) {
+              throw error;
+            }
+          },
         );
+        //tag all camera names to their corresponding camera
+        for (var i = 0; i < cameraResponses.length; i++) {
+          //parse the first geocode location available from Openmap API as the name - Format: camera_id - name
+          trafficResponse.data.items[0].cameras[i].name =
+            `${trafficResponse.data.items[0].cameras[i].camera_id} - ${parseGeoCodeLocation(
+              cameraResponses[i].data.GeocodeInfo[0],
+            )}`;
+          //map weather to camera
+          trafficResponse.data.items[0].cameras[i].weather = mapWeather(
+            trafficResponse.data.items[0].cameras[i].location,
+            weatherResponse.data,
+          );
+        }
+
+        //cache data to redis
+        let cacheKey = request.datetime.toString();
+        let cacheValue = JSON.stringify(trafficResponse.data.items[0].cameras);
+        await this.redis.set(cacheKey, cacheValue);
+
+        responseData = trafficResponse.data.items[0].cameras;
       }
-
-      //cache data to redis
-      let cacheKey = request.datetime.toString();
-      let cacheValue = JSON.stringify(trafficResponse.data.items[0].cameras);
-      await this.redis.set(cacheKey, cacheValue);
-
-      responseData = trafficResponse.data.items[0].cameras;
     }
 
     //store record as data
