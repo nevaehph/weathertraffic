@@ -120,9 +120,6 @@ export class ReportService {
       targets.pop();
     }
 
-    console.log({ targets });
-    console.log({ records });
-
     //if there are no potential targets, return a response to the client
     if (targets.length < 1) {
       return 'There are no records found within the period specified.';
