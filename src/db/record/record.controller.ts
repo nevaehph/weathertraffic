@@ -15,31 +15,28 @@ import { UpdateRecordDto } from './dto/update-record.dto';
 export class RecordController {
   constructor(private readonly recordService: RecordService) {}
 
-  /* 
-    Remove CRUD temporarily as it is not used
-  */
-  // @Post()
-  // create(@Body() createRecordDto: CreateRecordDto) {
-  //   return this.recordService.create(createRecordDto);
-  // }
+  @Post()
+  create(@Body() createRecordDto: CreateRecordDto) {
+    return this.recordService.create(createRecordDto);
+  }
 
-  // @Get()
-  // findAll() {
-  //   return this.recordService.findAll();
-  // }
+  @Get()
+  findAll() {
+    return this.recordService.findAll();
+  }
 
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.recordService.findOne(+id);
-  // }
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.recordService.findOne(+id);
+  }
 
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateRecordDto: UpdateRecordDto) {
-  //   return this.recordService.update(+id, updateRecordDto);
-  // }
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateRecordDto: UpdateRecordDto) {
+    return this.recordService.update(+id, updateRecordDto);
+  }
 
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.recordService.remove(+id);
-  // }
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.recordService.remove(+id);
+  }
 }

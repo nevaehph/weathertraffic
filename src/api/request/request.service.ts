@@ -7,12 +7,17 @@ import parseGeoCodeLocation from './lib/parseGeocodeInfo';
 import mapWeather from './lib/mapWeather';
 import Redis from 'ioredis';
 import { InjectRedis } from '@nestjs-modules/ioredis';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Record } from '../../db/record/entities/record.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class RequestService {
   constructor(
     private readonly httpService: HttpService,
     @InjectRedis() private readonly redis: Redis,
+    @InjectRepository(Record)
+    private readonly recordRepository: Repository<Record>,
   ) {}
 
   async requestTrafficWeather(request: RequestTrafficWeatherDto) {
@@ -116,6 +121,16 @@ export class RequestService {
 
       responseData = trafficResponse.data.items[0].cameras;
     }
+
+    //store record as data
+    const record: Record = new Record();
+    record.data = { ...responseData };
+    //set datetime to not include timezone
+    let datetime = new Date(request.datetime);
+    let offset = datetime.getTimezoneOffset() * 60000;
+    record.datetime = new Date(datetime.getTime() - offset);
+
+    this.recordRepository.save(record);
 
     return responseData;
   }

@@ -18,7 +18,7 @@ export class Record {
   data: DataType;
 
   //Date Time Parameter of request
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'timestamp without time zone' })
   datetime: Date;
 
   @CreateDateColumn({

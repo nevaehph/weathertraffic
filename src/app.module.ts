@@ -8,6 +8,7 @@ import { RequestModule } from './api/request/request.module';
 import { ReportModule } from './api/report/report.module';
 //DB Entity Modules
 import { RecordModule } from './db/record/record.module';
+import { Record } from './db/record/entities/record.entity';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { RecordModule } from './db/record/record.module';
       username: 'weathertraffic',
       password: 'weathertraffic12345',
       database: 'weathertraffic_db',
-      entities: [],
+      entities: [Record],
       synchronize: true,
     }),
     ConfigModule.forRoot(),
